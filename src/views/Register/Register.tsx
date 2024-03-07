@@ -13,7 +13,8 @@ import { LockOutlined } from '@mui/icons-material';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAppDispatch } from '../../hooks/redux-hooks';
-import { NewUser, register } from '../../slices/authSlice';
+import { ErrorResponse, NewUser, register } from '../../slices/authSlice';
+import { NotificationType, showNotification } from '../../slices/notificationSlice';
 
 const Register = () => {
   const dispatch = useAppDispatch();
@@ -56,8 +57,18 @@ const Register = () => {
     if (validateForm()) {
       try {
         await dispatch(register({ name, email, password })).unwrap();
-      } catch (e) {
-        console.error(e);
+      } catch (rejectedValue) {
+        const { message, code } = rejectedValue as ErrorResponse;
+        dispatch(
+          showNotification({
+            message: message,
+            type: NotificationType.Error
+          })
+        );
+
+        if (code === 409) {
+          setErrors({ ...errors, email: message });
+        }
       }
     }
   };

@@ -1,5 +1,6 @@
 import { PayloadAction, createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import { axiosInstance, setAuthToken } from '../api/axiosSetup';
+import axios from 'axios';
 
 export type User = {
   email: string;
@@ -8,6 +9,11 @@ export type User = {
 
 export type NewUser = User & {
   name: string;
+};
+
+export type ErrorResponse = {
+  message: string;
+  code: number;
 };
 
 type UserInfo = {
@@ -19,7 +25,7 @@ type UserInfo = {
 type AuthApiState = {
   userInfo?: UserInfo | null;
   status: 'idle' | 'loading' | 'failed';
-  error: string | null;
+  error: ErrorResponse | null;
 };
 
 const initialState: AuthApiState = {
@@ -30,28 +36,55 @@ const initialState: AuthApiState = {
   error: null
 };
 
-export const login = createAsyncThunk('login', async (data: User) => {
-  console.log('login started');
-  const response = await axiosInstance.post('auth/login', data);
-  const { accessToken, user } = response.data;
+export const login = createAsyncThunk<UserInfo, User, { rejectValue: ErrorResponse }>(
+  'login',
+  async (data: User, { rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.post('auth/login', data);
+      const { accessToken, user } = response.data;
 
-  localStorage.setItem('token', accessToken);
-  localStorage.setItem('userInfo', JSON.stringify(user));
-  setAuthToken(accessToken);
+      localStorage.setItem('token', accessToken);
+      localStorage.setItem('userInfo', JSON.stringify(user));
+      setAuthToken(accessToken);
 
-  return user;
-});
+      return user;
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response) {
+        return rejectWithValue({
+          message: error.response.data.message,
+          code: error.response.status
+        });
+      } else {
+        return rejectWithValue({ message: 'An unexpected error occurred', code: 500 });
+      }
+    }
+  }
+);
 
-export const register = createAsyncThunk('register', async (data: NewUser) => {
-  const response = await axiosInstance.post('auth/register', data);
-  const { accessToken, user } = response.data;
+export const register = createAsyncThunk<UserInfo, NewUser, { rejectValue: ErrorResponse }>(
+  'register',
+  async (data: NewUser, { rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.post('auth/register', data);
+      const { accessToken, user } = response.data;
 
-  localStorage.setItem('token', accessToken);
-  localStorage.setItem('userInfo', JSON.stringify(user));
-  setAuthToken(accessToken);
+      localStorage.setItem('token', accessToken);
+      localStorage.setItem('userInfo', JSON.stringify(user));
+      setAuthToken(accessToken);
 
-  return user;
-});
+      return user;
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response) {
+        return rejectWithValue({
+          message: error.response.data.message,
+          code: error.response.status
+        });
+      } else {
+        return rejectWithValue({ message: 'An unexpected error occurred', code: 500 });
+      }
+    }
+  }
+);
 
 export const logout = createAsyncThunk('logout', async () => {
   try {
@@ -93,7 +126,7 @@ const authSlice = createSlice({
       })
       .addCase(login.rejected, (state, action) => {
         state.status = 'failed';
-        state.error = action.error.message ?? 'Login failed';
+        state.error = action.payload as ErrorResponse;
       })
       .addCase(register.pending, (state) => {
         state.status = 'loading';
@@ -105,7 +138,7 @@ const authSlice = createSlice({
       })
       .addCase(register.rejected, (state, action) => {
         state.status = 'failed';
-        state.error = action.error.message ?? 'Registration failed';
+        state.error = action.payload as ErrorResponse;
       })
       .addCase(logout.pending, (state) => {
         state.status = 'loading';
@@ -117,7 +150,10 @@ const authSlice = createSlice({
       })
       .addCase(logout.rejected, (state, action) => {
         state.status = 'failed';
-        state.error = action.error.message ?? 'Logout failed';
+        state.error = {
+          message: action.error.message ?? 'Logout failed',
+          code: 500
+        } as ErrorResponse;
       })
       .addCase(renewToken.pending, (state) => {
         state.status = 'loading';
@@ -129,7 +165,7 @@ const authSlice = createSlice({
       })
       .addCase(renewToken.rejected, (state) => {
         state.status = 'failed';
-        state.error = 'Token renewal failed';
+        state.error = { message: 'Token renewal failed', code: 500 } as ErrorResponse;
       });
   }
 });

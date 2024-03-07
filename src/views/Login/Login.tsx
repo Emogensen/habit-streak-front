@@ -13,7 +13,8 @@ import {
 } from '@mui/material';
 import { Link } from 'react-router-dom';
 import { useAppDispatch } from '../../hooks/redux-hooks';
-import { User, login } from '../../slices/authSlice';
+import { ErrorResponse, User, login } from '../../slices/authSlice';
+import { NotificationType, showNotification } from '../../slices/notificationSlice';
 
 const Login = () => {
   const dispatch = useAppDispatch();
@@ -35,10 +36,6 @@ const Login = () => {
       formIsValid = false;
       tempErrors.email = 'Please enter a valid email address';
     }
-    if (!password || password.length < 6) {
-      formIsValid = false;
-      tempErrors.password = 'Password must be at least 6 characters long';
-    }
     setErrors(tempErrors);
 
     return formIsValid;
@@ -50,8 +47,14 @@ const Login = () => {
     if (validateForm()) {
       try {
         await dispatch(login({ email, password })).unwrap();
-      } catch (error) {
-        console.error(error);
+      } catch (rejectedValue) {
+        const { message } = rejectedValue as ErrorResponse;
+        dispatch(
+          showNotification({
+            message: message,
+            type: NotificationType.Error
+          })
+        );
       }
     }
   };
