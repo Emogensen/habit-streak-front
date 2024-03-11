@@ -1,28 +1,18 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import { axiosInstance } from '../api/axiosSetup';
 
-type UserInfo = {
-  id: string;
-  name: string;
-  email: string;
-};
-
 type UserProfileData = {
   name: string;
   email: string;
 };
 
 type UserApiState = {
-  userInfo?: UserInfo | null;
   userProfileData?: UserProfileData | null;
   status: 'idle' | 'loading' | 'failed';
   error: string | null;
 };
 
 const initialState: UserApiState = {
-  userInfo: localStorage.getItem('userInfo')
-    ? JSON.parse(localStorage.getItem('userInfo') as string)
-    : null,
   userProfileData: undefined,
   status: 'idle',
   error: null

@@ -43,7 +43,6 @@ export const login = createAsyncThunk<UserInfo, User, { rejectValue: ErrorRespon
       const response = await axiosInstance.post('auth/login', data);
       const { accessToken, user } = response.data;
 
-      localStorage.setItem('token', accessToken);
       localStorage.setItem('userInfo', JSON.stringify(user));
       setAuthToken(accessToken);
 
@@ -68,7 +67,6 @@ export const register = createAsyncThunk<UserInfo, NewUser, { rejectValue: Error
       const response = await axiosInstance.post('auth/register', data);
       const { accessToken, user } = response.data;
 
-      localStorage.setItem('token', accessToken);
       localStorage.setItem('userInfo', JSON.stringify(user));
       setAuthToken(accessToken);
 
@@ -100,20 +98,32 @@ export const logout = createAsyncThunk('logout', async () => {
   return { success: true };
 });
 
-export const renewToken = createAsyncThunk('renewToken', async () => {
+export const renewToken = createAsyncThunk('renewToken', async (_, { rejectWithValue }) => {
   try {
     const response = await axiosInstance.post('auth/token/renew');
+    const { accessToken } = response.data;
 
-    return response.data;
+    setAuthToken(accessToken);
+
+    return accessToken;
   } catch (error) {
-    return Promise.reject(error);
+    if (axios.isAxiosError(error)) {
+      const errorMsg = error.response?.data.message ?? 'Token renewal failed';
+      const errorCode = error.response?.status ?? 500;
+      return rejectWithValue({ message: errorMsg, code: errorCode });
+    }
+    return rejectWithValue({ message: 'An unexpected error occurred', code: 500 });
   }
 });
 
 const authSlice = createSlice({
   name: 'auth',
   initialState,
-  reducers: {},
+  reducers: {
+    clearUser(state) {
+      state.userInfo = null;
+    }
+  },
   extraReducers: (builder) => {
     builder
       .addCase(login.pending, (state) => {
@@ -163,11 +173,12 @@ const authSlice = createSlice({
         state.status = 'idle';
         state.error = null;
       })
-      .addCase(renewToken.rejected, (state) => {
+      .addCase(renewToken.rejected, (state, action) => {
         state.status = 'failed';
-        state.error = { message: 'Token renewal failed', code: 500 } as ErrorResponse;
+        state.error = action.payload as ErrorResponse;
       });
   }
 });
 
+export const { clearUser } = authSlice.actions;
 export default authSlice.reducer;

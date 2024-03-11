@@ -10,27 +10,18 @@ const axiosInstance = axios.create({
 
 const setAuthToken = (token: string | null) => {
   if (token) {
+    localStorage.setItem('token', token);
     axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${token}`;
   } else {
     delete axiosInstance.defaults.headers.common['Authorization'];
   }
 };
 
-const token = localStorage.getItem('token');
-
-if (token) {
-  setAuthToken(token);
-}
-
 export { axiosInstance, setAuthToken };
 
 type TokenRenewCallback = () => Promise<string | null>;
-type GetCurrentTokenCallback = () => string | null;
 
-export const setupAxiosInterceptors = (
-  getCurrentToken: GetCurrentTokenCallback,
-  onTokenRenew: TokenRenewCallback
-) => {
+export const setupAxiosInterceptors = (onTokenRenew: TokenRenewCallback) => {
   axiosInstance.interceptors.response.use(
     (response) => response,
     async (error) => {
@@ -43,11 +34,12 @@ export const setupAxiosInterceptors = (
       ) {
         originalRequest._retry = true;
 
-        await onTokenRenew();
+        const newToken = await onTokenRenew();
 
-        const newToken = getCurrentToken();
-        setAuthToken(newToken);
-        originalRequest.headers['Authorization'] = `Bearer ${newToken}`;
+        if (newToken) {
+          localStorage.setItem('token', newToken);
+          originalRequest.headers['Authorization'] = `Bearer ${newToken}`;
+        }
 
         return axiosInstance(originalRequest);
       }

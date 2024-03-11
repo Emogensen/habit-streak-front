@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { logout } from '../../slices/authSlice';
 import { Button } from '@mui/material';
 import { getUser } from '../../slices/userSlice';
-import { useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
 
 const Home = () => {
   const dispatch = useAppDispatch();
@@ -13,20 +13,20 @@ const Home = () => {
   const userInfo = useAppSelector((state) => state.auth.userInfo);
   const userProfile = useAppSelector((state) => state.user.userProfileData);
 
-  useEffect(() => {
-    if (userInfo) {
-      dispatch(getUser(userInfo.id));
-    }
-  }, [userInfo, dispatch]);
-
-  const handleLogout = async () => {
+  const handleLogout = useCallback(async () => {
     try {
       await dispatch(logout()).unwrap();
       navigate('/login');
     } catch (e) {
       console.error(e);
     }
-  };
+  }, [dispatch, navigate]);
+
+  useEffect(() => {
+    if (userInfo) {
+      dispatch(getUser(userInfo.id));
+    }
+  }, [userInfo, dispatch, handleLogout]);
 
   return (
     <CenteredContainer>

@@ -1,5 +1,5 @@
 import styled from '@emotion/styled';
-import { useState } from 'react';
+import { FormEvent, useState } from 'react';
 import { LockOutlined } from '@mui/icons-material';
 import {
   Container,
@@ -41,7 +41,7 @@ const Login = () => {
     return formIsValid;
   };
 
-  const handleLogin = async (e: Event) => {
+  const handleLogin = async (e: FormEvent<HTMLFormElement> | Event) => {
     e.preventDefault();
 
     if (validateForm()) {

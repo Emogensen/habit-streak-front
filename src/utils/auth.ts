@@ -1,15 +1,13 @@
 import { axiosInstance } from '../api/axiosSetup';
 
-export const validateToken = async () => {
+export const validateToken = async (token: string | null): Promise<string | boolean> => {
   try {
-    const token = localStorage.getItem('token');
     if (!token) {
       return false;
     }
 
     await axiosInstance.get('auth/token/validate');
-
-    return true;
+    return token;
   } catch (error) {
     console.error('Token validation error: ', error);
     return false;

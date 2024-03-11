@@ -4,27 +4,24 @@ import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import { Provider } from 'react-redux';
 import store from './store.ts';
-import { renewToken } from './slices/authSlice.ts';
+import { clearUser, renewToken } from './slices/authSlice.ts';
 import { setupAxiosInterceptors } from './api/axiosSetup.ts';
 
-const getToken = (): string | null => localStorage.getItem('token');
-
 const refreshToken = async (): Promise<string | null> => {
-  try {
-    const resultAction = await store.dispatch(renewToken());
-    const newToken = resultAction.payload?.accessToken;
-    if (newToken) {
-      localStorage.setItem('token', newToken);
-      return newToken;
-    }
-    return null;
-  } catch (error) {
-    console.error('Error during renewal of token');
+  const resultAction = await store.dispatch(renewToken());
+  if (renewToken.fulfilled.match(resultAction)) {
+    console.log('token renewed: ', resultAction);
+    return resultAction.payload;
+  } else if (renewToken.rejected.match(resultAction)) {
+    console.error('Error during renewal of token', resultAction.error);
+    localStorage.removeItem('userInfo');
+    store.dispatch(clearUser());
     return null;
   }
+  return null;
 };
 
-setupAxiosInterceptors(getToken, refreshToken);
+setupAxiosInterceptors(refreshToken);
 
 const container = document.getElementById('root')!;
 

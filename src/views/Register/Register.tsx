@@ -10,7 +10,7 @@ import {
   Typography
 } from '@mui/material';
 import { LockOutlined } from '@mui/icons-material';
-import { useState } from 'react';
+import { FormEvent, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAppDispatch } from '../../hooks/redux-hooks';
 import { ErrorResponse, NewUser, register } from '../../slices/authSlice';
@@ -51,7 +51,7 @@ const Register = () => {
     return formIsValid;
   };
 
-  const handleRegister = async (e: Event) => {
+  const handleRegister = async (e: FormEvent<HTMLFormElement> | Event) => {
     e.preventDefault();
 
     if (validateForm()) {
