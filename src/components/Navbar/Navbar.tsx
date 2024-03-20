@@ -12,15 +12,20 @@ const Navbar = () => {
     <Nav>
       <Container>
         <LogoContainer>
-          <HomeLink
+          <Link
             to="/"
             onClick={() => {
               setActive('');
             }}
           >
             {/* Logo here instead? */}
-            <Name>STT Booking</Name>
-          </HomeLink>
+            <Name>
+              <span className="actual-text">&nbsp;habitstreak&nbsp;</span>
+              <span aria-hidden="true" className="hover-text">
+                &nbsp;habitstreak&nbsp;
+              </span>
+            </Name>
+          </Link>
         </LogoContainer>
         <DesktopContainer>
           <NavList>
@@ -90,18 +95,48 @@ const LogoContainer = styled.div`
   margin-left: 2.5rem;
 `;
 
-const Name = styled.p`
-  display: flex;
-  font-size: 1.25rem;
-  line-height: 1.75rem;
-  font-weight: 700;
+const Name = styled.button`
+  position: relative;
+  margin: 0;
+  height: auto;
+  background: transparent;
+  padding: 0;
+  border: none;
   cursor: pointer;
-`;
+  --border-width: 6px;
+  --text-stroke-color: rgba(255, 255, 255, 0.6);
+  --animation-color: #37ff8b;
+  --fs-size: 2em;
+  font-size: var(--fs-size);
+  font-family: 'Arial';
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: transparent;
+  -webkit-text-stroke: 1px var(--text-stroke-color);
 
-const HomeLink = styled(Link)`
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
+  .hover-text {
+    position: absolute;
+    inset: 0;
+  }
+
+  .actual-text {
+    color: var(--text-stroke-color);
+    -webkit-text-stroke: 1px transparent;
+  }
+
+  .hover-text {
+    width: 0;
+    overflow: hidden;
+    color: var(--animation-color);
+    -webkit-text-stroke: 1px var(--animation-color);
+    border-right: var(--border-width) solid var(--animation-color);
+    transition: width 0.5s ease;
+  }
+
+  &:hover .hover-text {
+    width: 100%;
+    filter: drop-shadow(0 0 23px var(--animation-color));
+  }
 `;
 
 const DesktopContainer = styled.div`
